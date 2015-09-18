@@ -1,0 +1,59 @@
+require 'net/http'
+require 'httpi'
+require 'win32/sspi/http_client'
+
+module HTTPI
+  module Adapter
+    class RubySSPI < Base
+      register :ruby_sspi
+      
+      def initialize(req)
+        @client = Win32::SSPI::HttpClient.new
+        @request = req
+      end
+      
+      attr_reader :client
+      
+      def request(method)
+        unless REQUEST_METHODS.include? method
+          raise NotSupportedError, "Net::HTTP does not support custom HTTP methods"
+        end
+
+        http_req = convert_to_http_request(method,@request)
+        response = perform_request(Net::HTTP, @client, http_req)
+        convert_to_httpi_response(response)
+      end
+      
+      private
+      
+      def perform_request(http_klass,client,http_req)
+        http_klass.start(@request.url) do |http|
+          response = client.request_with_authorize(http,http_req)
+        end
+      end
+      
+      def convert_to_http_request(type,req)
+        request_class = case type
+          when :get    then Net::HTTP::Get
+          when :post   then Net::HTTP::Post
+          when :head   then Net::HTTP::Head
+          when :put    then Net::HTTP::Put
+          when :delete then Net::HTTP::Delete
+        end
+
+        request = request_class.new(req.url.request_uri, req.headers)
+        request.body = req.body
+        request
+      end
+      
+      def convert_to_httpi_response(resp)
+        headers = resp.to_hash
+        headers.each do |key, value|
+          headers[key] = value[0] if value.size <= 1
+        end
+        body = (resp.body.kind_of?(Net::ReadAdapter) ? "" : resp.body)
+        Response.new(resp.code, headers, body)
+      end
+    end
+  end
+end
