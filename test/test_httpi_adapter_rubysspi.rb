@@ -13,61 +13,56 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
     assert_equal "Win32::SSPI::HttpClient", adapter.client.class.name
     assert_equal URI.parse("http://virtual-pc-serv.bpa.local:3005/test"), request.url
   end
-  
-  FakeAuth = 'YIIxckdlsleodllsleoeoo49dldleo490'
 
   def test_request_with_sspi_adapter
-    HTTPI::Adapter.register(:ruby_sspi,create_mock_adapter,{})
+    adapter_klass = create_mock_adapter
+    HTTPI::Adapter.register(:ruby_sspi, adapter_klass, {})
 
     request = HTTPI::Request.new("http://virtual-pc-serv.bpa.local:3005/test")
     response = HTTPI::get(request, :ruby_sspi)
-    
+
     assert_equal 'HTTPI::Response', response.class.name
     assert_equal 200, response.code
     assert_equal 'hello test', response.body
     assert_equal 1, response.headers.size
-    assert_equal FakeAuth, response.headers['Authorization']
-    
-    assert_equal request.url, read_state(:uri)
-    assert_equal 'Win32::SSPI::HttpClient', read_state(:adapter_client).class.name
-    assert_equal 'Net::HTTP::Get', read_state(:http_request).class.name
+    assert_equal MockAdapter::FakeAuth, response.headers['Authorization']
+
+    assert_equal request.url, adapter_klass.read_state(:uri)
+    assert_equal 'Win32::SSPI::HttpClient', adapter_klass.read_state(:adapter_client_klass)
+
+    http_req = adapter_klass.read_state(:http_request)
+    assert_equal 'Net::HTTP::Get', http_req.class.name
    ensure
     HTTPI::Adapter.register(:ruby_sspi,HTTPI::Adapter::RubySSPI,{})
-    clear_state
   end
-  
-  def create_mock_adapter
-    klass = Class.new(HTTPI::Adapter::RubySSPI) do
-      def perform_request(uri,client,http_req)
-        TC_HttpiAdapterRubySSPI.capture_state(:uri,uri)
-        TC_HttpiAdapterRubySSPI.capture_state(:adapter_client,client)
-        TC_HttpiAdapterRubySSPI.capture_state(:http_request,http_req)
 
-        TC_HttpiAdapterRubySSPI::create_mock_response
-      end
-    end
+  def create_mock_adapter
+    klass = Class.new(MockAdapter)
   end
-  
-  def read_state(key)
-    self.class.read_state(key)
+end
+
+class MockAdapter < HTTPI::Adapter::RubySSPI
+  FakeAuth = 'YIIxckdlsleodllsleoeoo49dldleo490'
+
+  def perform_request(uri,client,http_req)
+    self.class.capture_state(:uri, uri)
+    self.class.capture_state(:adapter_client_klass, client.class.name)
+    self.class.capture_state(:http_request, http_req)
+    self.class.create_mock_response
   end
-  
-  def clear_state
-    self.class.state.clear
-  end
-  
+
   def self.state
     @state ||= Hash.new
   end
-  
+
   def self.capture_state(key,value)
     state[key] = value
   end
-  
+
   def self.read_state(key)
     state[key]
   end
-  
+
   def self.create_mock_response
     resp = Class.new(::Hash) do
       def code
