@@ -1,7 +1,7 @@
 require 'minitest'
 require 'minitest/autorun'
 require 'httpi'
-require 'adapter/rubysspi'
+require 'httpi/adapter/rubysspi'
 
 HTTPI.log = false
 
