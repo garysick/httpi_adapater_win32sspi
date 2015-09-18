@@ -38,7 +38,7 @@ module HTTPI
           when :delete then Net::HTTP::Delete
         end
 
-        request = request_class.new(req.url.request_uri, req.headers)
+        request = request_class.new(req.url, req.headers)
         request.body = req.body
         request
       end
