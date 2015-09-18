@@ -29,6 +29,7 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
 
     yield adapter_klass if block_given?
 
+  ensure
     HTTPI::Adapter.register(:ruby_sspi,HTTPI::Adapter::RubySSPI,{})
   end
 
