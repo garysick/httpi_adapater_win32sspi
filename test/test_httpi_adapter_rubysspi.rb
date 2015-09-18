@@ -19,7 +19,7 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
   def test_request_with_sspi_adapter
     HTTPI::Adapter.register(:ruby_sspi,create_mock_adapter,{})
 
-    request = HTTPI::Request.new("http://pc-virtual-serv.bpa.local:3005/test")
+    request = HTTPI::Request.new("http://virtual-pc-serv.bpa.local:3005/test")
     response = HTTPI::get(request, :ruby_sspi)
     
     assert_equal 'HTTPI::Response', response.class.name
