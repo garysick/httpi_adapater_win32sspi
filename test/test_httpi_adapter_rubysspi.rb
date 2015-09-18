@@ -25,7 +25,7 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
     assert_equal 1, response.headers.size
     assert_equal FakeAuth, response.headers['Authorization']
     
-    assert_equal 'Net::HTTP', read_state(:http_klass).name
+    assert_equal request.url, read_state(:uri)
     assert_equal 'Win32::SSPI::HttpClient', read_state(:adapter_client).class.name
     assert_equal 'Net::HTTP::Get', read_state(:http_request).class.name
    ensure
@@ -35,8 +35,8 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
   
   def create_mock_adapter
     klass = Class.new(HTTPI::Adapter::RubySSPI) do
-      def perform_request(http_klass,client,http_req)
-        TC_HttpiAdapterRubySSPI.capture_state(:http_klass,http_klass)
+      def perform_request(uri,client,http_req)
+        TC_HttpiAdapterRubySSPI.capture_state(:uri,uri)
         TC_HttpiAdapterRubySSPI.capture_state(:adapter_client,client)
         TC_HttpiAdapterRubySSPI.capture_state(:http_request,http_req)
 
