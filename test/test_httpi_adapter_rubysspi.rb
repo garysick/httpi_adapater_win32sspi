@@ -47,7 +47,8 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
       assert_equal 1, response.headers.size
       assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
 
-      assert_equal request.url, adapter_klass.read_state(:uri)
+      assert_equal request.url.host, adapter_klass.read_state(:http).address
+      assert_equal request.url.port, adapter_klass.read_state(:http).port
       assert_equal 'Win32::SSPI::HttpClient', adapter_klass.read_state(:adapter_client_klass)
 
       http_req = adapter_klass.read_state(:http_request)
@@ -76,7 +77,8 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
       assert_equal 1, response.headers.size
       assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
 
-      assert_equal request.url, adapter_klass.read_state(:uri)
+      assert_equal request.url.host, adapter_klass.read_state(:http).address
+      assert_equal request.url.port, adapter_klass.read_state(:http).port
       assert_equal 'Win32::SSPI::HttpClient', adapter_klass.read_state(:adapter_client_klass)
 
       http_req = adapter_klass.read_state(:http_request)
@@ -106,7 +108,8 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
       assert_equal 1, response.headers.size
       assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
 
-      assert_equal request.url, adapter_klass.read_state(:uri)
+      assert_equal request.url.host, adapter_klass.read_state(:http).address
+      assert_equal request.url.port, adapter_klass.read_state(:http).port
       assert_equal 'Win32::SSPI::HttpClient', adapter_klass.read_state(:adapter_client_klass)
 
       http_req = adapter_klass.read_state(:http_request)
@@ -127,8 +130,8 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
 end
 
 class MockAdapter < HTTPI::Adapter::RubySSPI
-  def perform_request(uri,client,http_req)
-    self.class.capture_state(:uri, uri)
+  def perform_request(http,client,http_req)
+    self.class.capture_state(:http, http)
     self.class.capture_state(:adapter_client_klass, client.class.name)
     self.class.capture_state(:http_request, http_req)
     self.class.create_mock_response

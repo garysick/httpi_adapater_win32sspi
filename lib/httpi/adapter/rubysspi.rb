@@ -1,4 +1,5 @@
 require 'httpi'
+require 'net/http'
 require 'win32/sspi/http_client'
 
 module HTTPI
@@ -8,6 +9,7 @@ module HTTPI
       
       def initialize(req)
         @client = Win32::SSPI::HttpClient.new
+        @http = Net::HTTP.new(req.url.host,req.url.port)
         @request = req
       end
       
@@ -19,14 +21,14 @@ module HTTPI
         end
 
         http_req = convert_to_http_request(method,@request)
-        response = perform_request(@request.url, @client, http_req)
+        response = perform_request(@http, @client, http_req)
         convert_to_httpi_response(response)
       end
       
       private
       
-      def perform_request(uri,client,http_req)
-        response = client.request_with_authorization(uri,http_req)
+      def perform_request(http,client,http_req)
+        response = client.request_with_authorization(http,http_req)
       end
       
       def convert_to_http_request(type,req)
