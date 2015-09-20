@@ -13,5 +13,6 @@ class TC_HttpiAuth < MiniTest::Test
     assert req.auth.sspi?
     refute req.auth.sspi.empty?
     assert_equal "AnythingWillDo", req.auth.sspi.first[:sspi_api_klass]
+    assert HTTPI::Auth::Config::TYPES.include?(:sspi)
   end
 end
