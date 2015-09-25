@@ -1,6 +1,9 @@
+require 'base64'
 require 'httpi'
 require 'net/http'
-require 'win32/sspi/http_client'
+require 'win32-sspi'
+require 'negotiate/client'
+require_relative '../auth/config_sspi'
 
 module HTTPI
   module Adapter
@@ -8,12 +11,19 @@ module HTTPI
       register :ruby_sspi
       
       def initialize(req)
-        @client = Win32::SSPI::HttpClient.new
-        @http = Net::HTTP.new(req.url.host,req.url.port)
+        @sspi_client = nil
+        if :sspi == req.auth.type
+          options = req.auth.sspi.first
+          spn = options[:spn] rescue nil
+          raise "Must specify a spn to use the RubySSPI Adapter see req.auth.sspi(args)" if spn.nil?
+          @sspi_client = Win32::SSPI::Negotiate::Client.new(spn,options)
+        end
+        @client = Net::HTTP.new(req.url.host,req.url.port)
         @request = req
       end
       
       attr_reader :client
+      attr_reader :sspi_client
       
       def request(method)
         unless REQUEST_METHODS.include? method
@@ -21,14 +31,27 @@ module HTTPI
         end
 
         http_req = convert_to_http_request(method,@request)
-        response = perform_request(@http, @client, http_req)
+        response = perform_request(@client, @sspi_client, http_req)
         convert_to_httpi_response(response)
       end
       
       private
       
-      def perform_request(http,client,http_req)
-        response = client.request_with_authorization(http,http_req)
+      def perform_request(http_client,sspi_client,http_req)
+        token = nil
+        http_resp = nil
+        http_client.start do |http|
+          while sspi_client.authenticate_and_continue?(token)
+            http_req['Authorization'] = "#{sspi_client.auth_type} #{Base64.strict_encode64(sspi_client.token)}"
+            http_resp = http_client.request(http_req)
+            header = http_resp['www-authenticate']
+            if header
+              auth_type, token = header.split(' ')
+              token = Base64.strict_decode64(token)
+            end
+          end
+        end
+        http_resp
       end
       
       def convert_to_http_request(type,req)

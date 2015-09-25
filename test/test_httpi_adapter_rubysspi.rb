@@ -7,6 +7,7 @@ HTTPI.log = false
 
 class TC_HttpiAdapterRubySSPI < MiniTest::Test
   RequestURI = "http://virtual-pc-serv.bpa.local:3005/test"
+  RequestSPN = "HTTP/virtual-pc-serv.bpa.local"
   TestHeaderName = "Test-Header"
   TestHeader = "some junk"
   RemoteUserHdrName = "Remote-User"
@@ -17,9 +18,10 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
   
   def test_load_adapter
     request = HTTPI::Request.new(RequestURI)
+    request.auth.sspi(spn:RequestSPN)
     adapter = HTTPI.send(:load_adapter,:ruby_sspi,request)
     assert_equal "HTTPI::Adapter::RubySSPI", adapter.class.name
-    assert_equal "Win32::SSPI::HttpClient", adapter.client.class.name
+    assert_equal "Win32::SSPI::Negotiate::Client", adapter.sspi_client.class.name
     assert_equal URI.parse(RequestURI), request.url
   end
   
@@ -36,6 +38,7 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
   def test_get
     with_mock_adapter do |adapter_klass|
       request = HTTPI::Request.new(RequestURI)
+      request.auth.sspi(spn:RequestSPN)
       request.headers[TestHeaderName] = TestHeader
       request.headers[RemoteUserHdrName] = RemoteUserHdr
 
@@ -49,7 +52,7 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
 
       assert_equal request.url.host, adapter_klass.read_state(:http).address
       assert_equal request.url.port, adapter_klass.read_state(:http).port
-      assert_equal 'Win32::SSPI::HttpClient', adapter_klass.read_state(:adapter_client_klass)
+      assert_equal 'Win32::SSPI::Negotiate::Client', adapter_klass.read_state(:adapter_client_klass)
 
       http_req = adapter_klass.read_state(:http_request)
       assert_equal 'Net::HTTP::Get', http_req.class.name
@@ -65,6 +68,7 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
   def test_get_with_query_parameter
     with_mock_adapter do |adapter_klass|
       request = HTTPI::Request.new(RequestURI)
+      request.auth.sspi(spn:RequestSPN)
       request.query ="q=query"
       request.headers[TestHeaderName] = TestHeader
       request.headers[RemoteUserHdrName] = RemoteUserHdr
@@ -79,7 +83,7 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
 
       assert_equal request.url.host, adapter_klass.read_state(:http).address
       assert_equal request.url.port, adapter_klass.read_state(:http).port
-      assert_equal 'Win32::SSPI::HttpClient', adapter_klass.read_state(:adapter_client_klass)
+      assert_equal 'Win32::SSPI::Negotiate::Client', adapter_klass.read_state(:adapter_client_klass)
 
       http_req = adapter_klass.read_state(:http_request)
       assert_equal 'Net::HTTP::Get', http_req.class.name
@@ -96,6 +100,7 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
   def test_post
     with_mock_adapter do |adapter_klass|
       request = HTTPI::Request.new(RequestURI)
+      request.auth.sspi(spn:RequestSPN)
       request.body = "firstname=tom&lastname=johnson"
       request.headers[TestHeaderName] = TestHeader
       request.headers[RemoteUserHdrName] = RemoteUserHdr
@@ -110,7 +115,7 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
 
       assert_equal request.url.host, adapter_klass.read_state(:http).address
       assert_equal request.url.port, adapter_klass.read_state(:http).port
-      assert_equal 'Win32::SSPI::HttpClient', adapter_klass.read_state(:adapter_client_klass)
+      assert_equal 'Win32::SSPI::Negotiate::Client', adapter_klass.read_state(:adapter_client_klass)
 
       http_req = adapter_klass.read_state(:http_request)
       assert_equal 'Net::HTTP::Post', http_req.class.name
@@ -130,9 +135,9 @@ class TC_HttpiAdapterRubySSPI < MiniTest::Test
 end
 
 class MockAdapter < HTTPI::Adapter::RubySSPI
-  def perform_request(http,client,http_req)
-    self.class.capture_state(:http, http)
-    self.class.capture_state(:adapter_client_klass, client.class.name)
+  def perform_request(client,sspi,http_req)
+    self.class.capture_state(:http, client)
+    self.class.capture_state(:adapter_client_klass, sspi.class.name)
     self.class.capture_state(:http_request, http_req)
     self.class.create_mock_response
   end
