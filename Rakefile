@@ -9,7 +9,7 @@ CLEAN.include('**/*.gem')
 namespace :gem do
   desc "Create the httpi-adapter-win32sspi gem"
   task :create => [:clean] do
-    spec = eval(IO.read('httpi-adapter-win32sspi.gemspec'))
+    spec = eval(IO.read('httpi_adapter_win32sspi.gemspec'))
     Gem::Package.build(spec)
   end
 
