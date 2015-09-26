@@ -7,8 +7,8 @@ require_relative '../auth/config_sspi'
 
 module HTTPI
   module Adapter
-    class RubySSPI < Base
-      register :ruby_sspi
+    class Win32SSPI < Base
+      register :win32_sspi
       
       def initialize(req)
         @sspi_client = nil
