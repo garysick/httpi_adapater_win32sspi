@@ -1,11 +1,10 @@
-require 'minitest'
-require 'minitest/autorun'
 require 'httpi'
 require 'httpi/adapter/win32sspi_nethttp'
+require 'test-unit'
 
 HTTPI.log = false
 
-class TC_HttpiAdapter_Win32SSPINetHTTP < MiniTest::Test
+class TC_HttpiAdapter_Win32SSPINetHTTP < Test::Unit::TestCase
   RequestURI = "http://virtual-pc-serv.bpa.local:3005/test"
   RequestSPN = "HTTP/virtual-pc-serv.bpa.local"
   TestHeaderName = "Test-Header"
