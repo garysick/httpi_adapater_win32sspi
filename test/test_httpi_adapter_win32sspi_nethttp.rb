@@ -130,7 +130,7 @@ class TC_HttpiAdapter_Win32SSPINetHTTP < MiniTest::Test
   end
 
   def create_mock_adapter
-    klass = Class.new(MockWin32NetHTTPAdapter)
+    Class.new(MockWin32NetHTTPAdapter)
   end
 end
 
