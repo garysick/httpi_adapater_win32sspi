@@ -11,15 +11,9 @@ module HTTPI
       register :win32_sspi
       
       def initialize(req)
-        @sspi_client = nil
-        if :sspi == req.auth.type
-          options = req.auth.sspi.first
-          spn = options[:spn] rescue nil
-          raise "Must specify a spn to use the RubySSPI Adapter see req.auth.sspi(args)" if spn.nil?
-          @sspi_client = Win32::SSPI::Negotiate::Client.new(spn,options)
-        end
-        @client = Net::HTTP.new(req.url.host,req.url.port)
         @request = req
+        @sspi_client = create_sspi_client(req)
+        @client = create_client(req)
       end
       
       attr_reader :client
@@ -37,6 +31,46 @@ module HTTPI
       
       private
       
+      def create_sspi_client(request)
+        return nil unless :sspi == request.auth.type
+        
+        options = request.auth.sspi.first
+        spn = options[:spn] rescue nil
+        raise "Must specify a spn to use the RubySSPI Adapter see req.auth.sspi(args)" if spn.nil?
+        Win32::SSPI::Negotiate::Client.new(spn,options)
+      end
+      
+      def create_client(request)
+        if request.auth.digest?
+          raise NotSupportedError, "Net::HTTP does not support HTTP digest authentication"
+        end
+
+        if request.proxy
+          http = Net::HTTP.new(request.url.host, request.url.port,
+            request.proxy.host, request.proxy.port, request.proxy.user, request.proxy.password)
+        else
+          http = Net::HTTP.new(request.url.host, request.url.port)
+        end
+
+        http.open_timeout = request.open_timeout if request.open_timeout
+        http.read_timeout = request.read_timeout if request.read_timeout
+
+        if request.auth.ssl?
+          ssl = request.auth.ssl
+          unless ssl.verify_mode == :none
+            http.ca_file = ssl.ca_cert_file if ssl.ca_cert_file
+          end
+
+          http.key = ssl.cert_key
+          http.cert = ssl.cert
+
+          http.verify_mode = ssl.openssl_verify_mode
+          http.ssl_version = ssl.ssl_version if ssl.ssl_version
+        end
+        
+        http
+      end
+      
       def perform_request(http_client,sspi_client,http_req)
         token = nil
         http_resp = nil
@@ -46,7 +80,7 @@ module HTTPI
             http_resp = http_client.request(http_req)
             header = http_resp['www-authenticate']
             if header
-              sspi_client.auth_type, token = header.split(' ')
+              auth_type, token = header.split(' ')
               token = Base64.strict_decode64(token)
             end
           end
