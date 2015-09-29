@@ -1,6 +1,6 @@
 require 'pp'
 require 'httpi'
-require 'httpi/adapter/win32sspi'
+require 'httpi-adapter-win32sspi'
 
 class Win32SSPIClient
   def self.run(url)
