@@ -12,10 +12,9 @@ Gem::Specification.new do |spec|
   spec.homepage   = 'https://github.com/garysick/httpi-adapter-win32sspi'
   spec.files      = Dir['**/*'].reject{ |f| f.include?('git') }
   spec.test_files = Dir['test/*.rb']
-  spec.require_paths = ['lib','lib/httpi']
   spec.has_rdoc   = false
 
-  spec.add_dependency('win32-sspi', '~>0.1')
+  spec.add_dependency('win32-sspi', '~>0.0')
   spec.add_development_dependency('test-unit','~>3.0')
 
   spec.description = <<-EOF
