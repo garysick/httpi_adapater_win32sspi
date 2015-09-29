@@ -5,8 +5,8 @@ require 'test-unit'
 HTTPI.log = false
 
 class TC_HttpiAdapter_Win32SSPINetHTTP < Test::Unit::TestCase
-  RequestURI = "http://virtual-pc-serv.bpa.local:3005/test"
-  RequestSPN = "HTTP/virtual-pc-serv.bpa.local"
+  RequestURI = "http://virtual-server.gas.local:3005/test"
+  RequestSPN = "HTTP/virtual-server.gas.local"
   TestHeaderName = "Test-Header"
   TestHeader = "some junk"
   RemoteUserHdrName = "Remote-User"
@@ -55,7 +55,7 @@ class TC_HttpiAdapter_Win32SSPINetHTTP < Test::Unit::TestCase
 
       http_req = adapter_klass.read_state(:http_request)
       assert_equal 'Net::HTTP::Get', http_req.class.name
-      assert_equal "virtual-pc-serv.bpa.local", http_req.uri.host
+      assert_equal "virtual-server.gas.local", http_req.uri.host
       assert_equal 3005, http_req.uri.port
       assert_equal "/test", http_req.path
       
@@ -86,7 +86,7 @@ class TC_HttpiAdapter_Win32SSPINetHTTP < Test::Unit::TestCase
 
       http_req = adapter_klass.read_state(:http_request)
       assert_equal 'Net::HTTP::Get', http_req.class.name
-      assert_equal "virtual-pc-serv.bpa.local", http_req.uri.host
+      assert_equal "virtual-server.gas.local", http_req.uri.host
       assert_equal 3005, http_req.uri.port
       assert_equal "/test", http_req.uri.path
       assert_equal "q=query", http_req.uri.query
@@ -118,7 +118,7 @@ class TC_HttpiAdapter_Win32SSPINetHTTP < Test::Unit::TestCase
 
       http_req = adapter_klass.read_state(:http_request)
       assert_equal 'Net::HTTP::Post', http_req.class.name
-      assert_equal "virtual-pc-serv.bpa.local", http_req.uri.host
+      assert_equal "virtual-server.gas.local", http_req.uri.host
       assert_equal 3005, http_req.uri.port
       assert_equal "/test", http_req.path
       assert_equal "firstname=tom&lastname=johnson", http_req.body
