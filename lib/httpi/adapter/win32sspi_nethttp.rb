@@ -40,8 +40,8 @@ module HTTPI
             http_response = http_client.request(http_request, &block)
             header = http_response['www-authenticate']
             if header
-              sspi_client.auth_type, token = header.split(' ')
-              token = Base64.strict_decode64(token)
+              auth_type_token = header.split(' ')
+              token = Base64.strict_decode64(auth_type_token.last)
             end
           end
           http_response

@@ -80,8 +80,8 @@ module HTTPI
             http_resp = http_client.request(http_req)
             header = http_resp['www-authenticate']
             if header
-              auth_type, token = header.split(' ')
-              token = Base64.strict_decode64(token)
+              auth_type_token = header.split(' ')
+              token = Base64.strict_decode64(auth_type_token.last)
             end
           end
         end
