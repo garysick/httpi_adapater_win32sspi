@@ -18,9 +18,7 @@ module HTTPI
         @sspi_client = nil
         if :sspi == req.auth.type
           options = req.auth.sspi.first
-          spn = options[:spn] rescue nil
-          raise "Must specify a spn to use the Win32SSPI Adapter see req.auth.sspi(args)" if spn.nil?
-          @sspi_client = Win32::SSPI::Negotiate::Client.new(spn,options)
+          @sspi_client = Win32::SSPI::Negotiate::Client.new(options)
         end
       end
       
