@@ -73,14 +73,10 @@ module HTTPI
         token = nil
         http_resp = nil
         http_client.start do |http|
-          while sspi_client.authenticate_and_continue?(token)
-            http_req['Authorization'] = "#{sspi_client.auth_type} #{Base64.strict_encode64(sspi_client.token)}"
+          sspi_client.http_authenticate do |header|
+            http_req['Authorization'] = header
             http_resp = http_client.request(http_req)
-            header = http_resp['www-authenticate']
-            if header
-              auth_type_token = header.split(' ')
-              token = Base64.strict_decode64(auth_type_token.last)
-            end
+            http_resp['www-authenticate']
           end
         end
         http_resp
