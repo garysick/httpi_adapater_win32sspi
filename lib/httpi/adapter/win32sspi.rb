@@ -70,14 +70,29 @@ module HTTPI
       end
       
       def perform_request(http_client,sspi_client,http_req)
-        token = nil
+        if sspi_client
+          perform_authenticated_request(http_client,sspi_client,http_req)
+        else
+          perform_http_request(http_client,http_req)
+        end
+      end
+      
+      def perform_authenticated_request(http_client,sspi_client,http_req)
         http_resp = nil
         http_client.start do |http|
           sspi_client.http_authenticate do |header|
             http_req['Authorization'] = header
-            http_resp = http_client.request(http_req)
+            http_resp = http.request(http_req)
             http_resp['www-authenticate']
           end
+        end
+        http_resp
+      end
+      
+      def perform_http_request(http_client,http_req)
+        http_resp = nil
+        http_client.start do |http|
+          http_resp = http.request(http_req)
         end
         http_resp
       end
