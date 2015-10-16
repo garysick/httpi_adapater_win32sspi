@@ -13,7 +13,7 @@ module HTTPI
       def initialize(req)
         @request = req
         @sspi_client = create_sspi_client(req)
-        @client = create_client(req)
+        @client = create_http_client(req)
       end
       
       attr_reader :client
@@ -38,7 +38,7 @@ module HTTPI
         Win32::SSPI::Negotiate::Client.new(options)
       end
       
-      def create_client(request)
+      def create_http_client(request)
         if request.auth.digest?
           raise NotSupportedError, "Net::HTTP does not support HTTP digest authentication"
         end
