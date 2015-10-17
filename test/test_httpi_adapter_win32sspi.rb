@@ -45,9 +45,11 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
     assert_equal request, adapter_klass.read_state(:httpi_request)
     
     sspi_client = adapter_klass.read_state(:sspi_client)
-    assert_equal "Win32::SSPI::Negotiate::Client", sspi_client.class.name
-    assert_equal 'Negotiate', sspi_client.auth_type
-    assert_equal RequestSPN, sspi_client.spn
+    if sspi_client
+      assert_equal "Win32::SSPI::Negotiate::Client", sspi_client.class.name
+      assert_equal 'Negotiate', sspi_client.auth_type
+      assert_equal RequestSPN, sspi_client.spn
+    end
 
     http_req = adapter_klass.read_state(:http_request)
     assert_equal "virtual-server.gas.local", http_req.uri.host
@@ -115,6 +117,23 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
     end
   end
 
+  def test_request_without_sspi_client
+    with_mock_adapter do |adapter_klass|
+      request = HTTPI::Request.new(RequestURI)
+      request.headers[TestHeaderName] = TestHeader
+      request.headers[RemoteUserHdrName] = RemoteUserHdr
+
+      response = HTTPI::get(request, :win32_sspi)
+
+      assert_request_response_attributes(request,response,adapter_klass) do |http_req|
+        assert_equal 'Net::HTTP::Get', http_req.class.name
+        assert_nil adapter_klass.read_state(:sspi_client)
+        assert_equal 2, adapter_klass.read_state(:perform_http_request_args).length
+        assert_nil adapter_klass.read_state(:perform_authenticated_request_args)
+      end
+    end
+  end
+
   def create_mock_adapter
     Class.new(MockWin32SSPIAdapter)
   end
@@ -123,8 +142,11 @@ end
 class MockWin32SSPIAdapter < HTTPI::Adapter::Win32SSPI
   def create_sspi_client(request)
     sspi_client = super
-    self.class.capture_state(:sspi_client,sspi_client)
-    self
+    if sspi_client
+      self.class.capture_state(:sspi_client,sspi_client)
+      sspi_client = self
+    end
+    sspi_client
   end
   
   def http_authenticate
