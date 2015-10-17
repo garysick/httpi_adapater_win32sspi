@@ -23,25 +23,21 @@ end
 namespace :test do
   Rake::TestTask.new(:win32_adapter) do |t|
     t.test_files = FileList['test/test_httpi_adapter_win32sspi.rb']
-    t.warning = true
     t.verbose = true
   end
 
   Rake::TestTask.new(:win32_nethttp_adapter) do |t|
     t.test_files = FileList['test/test_httpi_adapter_win32sspi_nethttp.rb']
-    t.warning = true
     t.verbose = true
   end
 
   Rake::TestTask.new(:httpi_auth) do |t|
     t.test_files = FileList['test/test_httpi_auth.rb']
-    t.warning = true
     t.verbose = true
   end
 
   Rake::TestTask.new(:all) do |t|
     t.test_files = FileList['test/test_httpi*']
-    t.warning = true
     t.verbose = true
   end
 end
