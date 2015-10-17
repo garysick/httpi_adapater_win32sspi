@@ -35,6 +35,26 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
   ensure
     HTTPI::Adapter.register(:win32_sspi,HTTPI::Adapter::Win32SSPI,{})
   end
+  
+  def assert_request_response_attributes(request,response,adapter_klass)
+    assert_equal 'HTTPI::Response', response.class.name
+    assert_equal 200, response.code
+    assert_equal 'hello test', response.body
+    assert_equal 1, response.headers.size
+    assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
+
+    assert_equal request, adapter_klass.read_state(:httpi_request)
+
+    http_req = adapter_klass.read_state(:http_request)
+    assert_equal "virtual-server.gas.local", http_req.uri.host
+    assert_equal 3005, http_req.uri.port
+    assert_equal "/test", http_req.uri.path
+    
+    yield(http_req) if block_given?
+    
+    assert_equal TestHeader, http_req[TestHeaderName]
+    assert_equal RemoteUserHdr, http_req[RemoteUserHdrName]
+  end
 
   def test_get
     with_mock_adapter do |adapter_klass|
@@ -44,23 +64,10 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
       request.headers[RemoteUserHdrName] = RemoteUserHdr
 
       response = HTTPI::get(request, :win32_sspi)
-
-      assert_equal 'HTTPI::Response', response.class.name
-      assert_equal 200, response.code
-      assert_equal 'hello test', response.body
-      assert_equal 1, response.headers.size
-      assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
-
-      assert_equal request, adapter_klass.read_state(:httpi_request)
-
-      http_req = adapter_klass.read_state(:http_request)
-      assert_equal 'Net::HTTP::Get', http_req.class.name
-      assert_equal "virtual-server.gas.local", http_req.uri.host
-      assert_equal 3005, http_req.uri.port
-      assert_equal "/test", http_req.uri.path
       
-      assert_equal TestHeader, http_req[TestHeaderName]
-      assert_equal RemoteUserHdr, http_req[RemoteUserHdrName]
+      assert_request_response_attributes(request,response,adapter_klass) do |http_req|
+        assert_equal 'Net::HTTP::Get', http_req.class.name
+      end
     end
   end
 
@@ -73,24 +80,11 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
       request.headers[RemoteUserHdrName] = RemoteUserHdr
 
       response = HTTPI::get(request, :win32_sspi)
-
-      assert_equal 'HTTPI::Response', response.class.name
-      assert_equal 200, response.code
-      assert_equal 'hello test', response.body
-      assert_equal 1, response.headers.size
-      assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
-
-      assert_equal request, adapter_klass.read_state(:httpi_request)
-
-      http_req = adapter_klass.read_state(:http_request)
-      assert_equal 'Net::HTTP::Get', http_req.class.name
-      assert_equal "virtual-server.gas.local", http_req.uri.host
-      assert_equal 3005, http_req.uri.port
-      assert_equal "/test", http_req.uri.path
-      assert_equal "q=query", http_req.uri.query
       
-      assert_equal TestHeader, http_req[TestHeaderName]
-      assert_equal RemoteUserHdr, http_req[RemoteUserHdrName]
+      assert_request_response_attributes(request,response,adapter_klass) do |http_req|
+        assert_equal 'Net::HTTP::Get', http_req.class.name
+        assert_equal "q=query", http_req.uri.query
+      end
     end
   end
 
@@ -103,24 +97,11 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
       request.headers[RemoteUserHdrName] = RemoteUserHdr
 
       response = HTTPI::post(request, :win32_sspi)
-
-      assert_equal 'HTTPI::Response', response.class.name
-      assert_equal 200, response.code
-      assert_equal 'hello test', response.body
-      assert_equal 1, response.headers.size
-      assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
-
-      assert_equal request, adapter_klass.read_state(:httpi_request)
-
-      http_req = adapter_klass.read_state(:http_request)
-      assert_equal 'Net::HTTP::Post', http_req.class.name
-      assert_equal "virtual-server.gas.local", http_req.uri.host
-      assert_equal 3005, http_req.uri.port
-      assert_equal "/test", http_req.uri.path
-      assert_equal "firstname=tom&lastname=johnson", http_req.body
       
-      assert_equal TestHeader, http_req[TestHeaderName]
-      assert_equal RemoteUserHdr, http_req[RemoteUserHdrName]
+      assert_request_response_attributes(request,response,adapter_klass) do |http_req|
+        assert_equal 'Net::HTTP::Post', http_req.class.name
+        assert_equal "firstname=tom&lastname=johnson", http_req.body
+      end
     end
   end
 
