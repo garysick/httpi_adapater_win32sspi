@@ -26,8 +26,7 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
     assert_equal URI.parse(RequestURI), request.url
   end
   
-  def with_mock_adapter
-    adapter_klass = create_mock_adapter
+  def with_mock_adapter(adapter_klass = create_mock_adapter)
     HTTPI::Adapter.register(:win32_sspi, adapter_klass, {})
 
     yield adapter_klass if block_given?
