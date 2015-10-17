@@ -14,6 +14,8 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
   FakeAuth = 'YIIxckdlsleodllsleoeoo49dldleo490'
   AuthenticateHdrName = "www-authenticate"
   AuthenticateHdr = "Negotiate #{FakeAuth}"
+  AuthorizationHdrName = "Authorization"
+  AuthorizationHdr = AuthenticateHdr
   
   def test_load_adapter
     request = HTTPI::Request.new(RequestURI)
@@ -49,9 +51,7 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
       assert_equal 1, response.headers.size
       assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
 
-      assert_equal request.url.host, adapter_klass.read_state(:http).address
-      assert_equal request.url.port, adapter_klass.read_state(:http).port
-      assert_equal 'Win32::SSPI::Negotiate::Client', adapter_klass.read_state(:adapter_client_klass)
+      assert_equal request, adapter_klass.read_state(:httpi_request)
 
       http_req = adapter_klass.read_state(:http_request)
       assert_equal 'Net::HTTP::Get', http_req.class.name
@@ -80,9 +80,7 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
       assert_equal 1, response.headers.size
       assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
 
-      assert_equal request.url.host, adapter_klass.read_state(:http).address
-      assert_equal request.url.port, adapter_klass.read_state(:http).port
-      assert_equal 'Win32::SSPI::Negotiate::Client', adapter_klass.read_state(:adapter_client_klass)
+      assert_equal request, adapter_klass.read_state(:httpi_request)
 
       http_req = adapter_klass.read_state(:http_request)
       assert_equal 'Net::HTTP::Get', http_req.class.name
@@ -112,9 +110,7 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
       assert_equal 1, response.headers.size
       assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
 
-      assert_equal request.url.host, adapter_klass.read_state(:http).address
-      assert_equal request.url.port, adapter_klass.read_state(:http).port
-      assert_equal 'Win32::SSPI::Negotiate::Client', adapter_klass.read_state(:adapter_client_klass)
+      assert_equal request, adapter_klass.read_state(:httpi_request)
 
       http_req = adapter_klass.read_state(:http_request)
       assert_equal 'Net::HTTP::Post', http_req.class.name
@@ -134,13 +130,31 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
 end
 
 class MockWin32SSPIAdapter < HTTPI::Adapter::Win32SSPI
-  def perform_request(client,sspi,http_req)
-    self.class.capture_state(:http, client)
-    self.class.capture_state(:adapter_client_klass, sspi.class.name)
-    self.class.capture_state(:http_request, http_req)
+  def create_sspi_client(request)
+    self
+  end
+  
+  def http_authenticate
+    yield(TC_HttpiAdapterWin32SSPI::AuthorizationHdr) if block_given?
+  end
+  
+  def create_http_client(request)
+    self.class.capture_state(:httpi_request,request)
+    self
+  end
+  
+  def start
+    yield self if block_given?
+  end
+  
+  def request(req)
+    if req.kind_of?(Symbol)
+      return super
+    end
+    self.class.capture_state(:http_request, req)
     self.class.create_mock_response
   end
-
+  
   def self.state
     @state ||= Hash.new
   end
