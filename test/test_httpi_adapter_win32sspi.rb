@@ -44,6 +44,11 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
     assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
 
     assert_equal request, adapter_klass.read_state(:httpi_request)
+    
+    sspi_client = adapter_klass.read_state(:sspi_client)
+    assert_equal "Win32::SSPI::Negotiate::Client", sspi_client.class.name
+    assert_equal 'Negotiate', sspi_client.auth_type
+    assert_equal RequestSPN, sspi_client.spn
 
     http_req = adapter_klass.read_state(:http_request)
     assert_equal "virtual-server.gas.local", http_req.uri.host
@@ -112,6 +117,8 @@ end
 
 class MockWin32SSPIAdapter < HTTPI::Adapter::Win32SSPI
   def create_sspi_client(request)
+    sspi_client = super
+    self.class.capture_state(:sspi_client,sspi_client)
     self
   end
   
