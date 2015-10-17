@@ -71,6 +71,8 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
       
       assert_request_response_attributes(request,response,adapter_klass) do |http_req|
         assert_equal 'Net::HTTP::Get', http_req.class.name
+        assert_equal 3, adapter_klass.read_state(:perform_authenticated_request_args).length
+        assert_nil adapter_klass.read_state(:perform_http_request_args)
       end
     end
   end
@@ -88,6 +90,8 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
       assert_request_response_attributes(request,response,adapter_klass) do |http_req|
         assert_equal 'Net::HTTP::Get', http_req.class.name
         assert_equal "q=query", http_req.uri.query
+        assert_equal 3, adapter_klass.read_state(:perform_authenticated_request_args).length
+        assert_nil adapter_klass.read_state(:perform_http_request_args)
       end
     end
   end
@@ -105,6 +109,8 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
       assert_request_response_attributes(request,response,adapter_klass) do |http_req|
         assert_equal 'Net::HTTP::Post', http_req.class.name
         assert_equal "firstname=tom&lastname=johnson", http_req.body
+        assert_equal 3, adapter_klass.read_state(:perform_authenticated_request_args).length
+        assert_nil adapter_klass.read_state(:perform_http_request_args)
       end
     end
   end
@@ -128,6 +134,16 @@ class MockWin32SSPIAdapter < HTTPI::Adapter::Win32SSPI
   def create_http_client(request)
     self.class.capture_state(:httpi_request,request)
     self
+  end
+  
+  def perform_authenticated_request(*args)
+    self.class.capture_state(:perform_authenticated_request_args,args)
+    super
+  end
+  
+  def perform_http_request(*args)
+    self.class.capture_state(:perform_http_request_args,args)
+    super
   end
   
   def start
