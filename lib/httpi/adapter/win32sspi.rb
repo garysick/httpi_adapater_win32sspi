@@ -25,7 +25,7 @@ module HTTPI
         end
 
         http_req = convert_to_http_request(method,@request)
-        response = perform_request(@client, @sspi_client, http_req)
+        response = dispatch_request(@client, @sspi_client, http_req)
         convert_to_httpi_response(response)
       end
       
@@ -69,7 +69,7 @@ module HTTPI
         http
       end
       
-      def perform_request(http_client,sspi_client,http_req)
+      def dispatch_request(http_client,sspi_client,http_req)
         if sspi_client
           perform_authenticated_request(http_client,sspi_client,http_req)
         else
@@ -82,7 +82,7 @@ module HTTPI
         http_client.start do |http|
           sspi_client.http_authenticate do |header|
             http_req['Authorization'] = header
-            http_resp = make_the_request(http,http_req)
+            http_resp = perform_request(http,http_req)
             http_resp['www-authenticate']
           end
         end
@@ -92,12 +92,12 @@ module HTTPI
       def perform_http_request(http_client,http_req)
         http_resp = nil
         http_client.start do |http|
-          http_resp = make_the_request(http,http_req)
+          http_resp = perform_request(http,http_req)
         end
         http_resp
       end
       
-      def make_the_request(http,http_req)
+      def perform_request(http,http_req)
         if @request.on_body
           http.request(http_req) do |r|
             r.read_body(@request.on_body)
