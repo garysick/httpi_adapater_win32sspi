@@ -100,7 +100,9 @@ module HTTPI
       def perform_request(http,http_req)
         if @request.on_body
           http.request(http_req) do |r|
-            r.read_body(@request.on_body)
+            r.read_body do |seg|
+              @request.on_body.call(seg)
+            end
           end
         else
           http.request(http_req)

@@ -211,7 +211,7 @@ class MockWin32SSPIAdapter < HTTPI::Adapter::Win32SSPI
     self.class.create_mock_response(segmented_body)
   end
   
-  def read_body(segment_handler)
+  def read_body(dest=nil,&segment_handler)
     if segment_handler
       3.times do |ii|
         segment_handler.call(TC_HttpiAdapterWin32SSPI::MockRespSegments[ii])
