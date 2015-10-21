@@ -16,6 +16,7 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
   AuthenticateHdr = "Negotiate #{FakeAuth}"
   AuthorizationHdrName = "Authorization"
   AuthorizationHdr = AuthenticateHdr
+  MockRespSegments = ["Segment 1","Segment 2","Segment 3"]
   
   def test_load_adapter
     request = HTTPI::Request.new(RequestURI)
@@ -38,7 +39,7 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
   def assert_request_response_attributes(request,response,adapter_klass)
     assert_equal 'HTTPI::Response', response.class.name
     assert_equal 200, response.code
-    assert_equal 'hello test', response.body
+    assert_equal 'hello test', response.body unless request.on_body
     assert_equal 1, response.headers.size
     assert_equal AuthenticateHdr, response.headers[AuthenticateHdrName]
 
@@ -134,6 +135,30 @@ class TC_HttpiAdapterWin32SSPI < Test::Unit::TestCase
     end
   end
 
+  def test_get_with_request_block
+    with_mock_adapter do |adapter_klass|
+      request = HTTPI::Request.new(RequestURI)
+      request.auth.sspi(spn:RequestSPN)
+      request.headers[TestHeaderName] = TestHeader
+      request.headers[RemoteUserHdrName] = RemoteUserHdr
+      response_segments = []
+      request.on_body do |seg|
+        response_segments << seg
+      end
+
+      response = HTTPI::get(request, :win32_sspi)
+      
+      assert_request_response_attributes(request,response,adapter_klass) do |http_req|
+        assert_equal 'Net::HTTP::Get', http_req.class.name
+        assert_equal 3, adapter_klass.read_state(:perform_authenticated_request_args).length
+        assert_nil adapter_klass.read_state(:perform_http_request_args)
+        
+        assert_equal 3, response_segments.length
+        assert_equal MockRespSegments, response_segments
+      end
+    end
+  end
+
   def create_mock_adapter
     Class.new(MockWin32SSPIAdapter)
   end
@@ -173,11 +198,25 @@ class MockWin32SSPIAdapter < HTTPI::Adapter::Win32SSPI
   end
   
   def request(req)
-    if req.kind_of?(Symbol)
-      return super
-    end
+    return super if req.kind_of?(Symbol)
+
     self.class.capture_state(:http_request, req)
-    self.class.create_mock_response
+
+    segmented_body = false
+    if block_given?
+      yield self
+      segmented_body = true
+    end
+    
+    self.class.create_mock_response(segmented_body)
+  end
+  
+  def read_body(segment_handler)
+    if segment_handler
+      3.times do |ii|
+        segment_handler.call(TC_HttpiAdapterWin32SSPI::MockRespSegments[ii])
+      end
+    end
   end
   
   def self.state
@@ -192,7 +231,7 @@ class MockWin32SSPIAdapter < HTTPI::Adapter::Win32SSPI
     state[key]
   end
 
-  def self.create_mock_response
+  def self.create_mock_response(segmented_body=false)
     resp = Class.new(::Hash) do
       def code
         @code ||= 200
@@ -214,7 +253,7 @@ class MockWin32SSPIAdapter < HTTPI::Adapter::Win32SSPI
       end
     end.new
 
-    resp.body = "hello test"
+    resp.body = "hello test" unless segmented_body
     resp[TC_HttpiAdapterWin32SSPI::AuthenticateHdrName] = [TC_HttpiAdapterWin32SSPI::AuthenticateHdr]
     resp
   end

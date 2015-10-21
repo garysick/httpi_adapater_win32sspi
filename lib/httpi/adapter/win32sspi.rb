@@ -82,7 +82,7 @@ module HTTPI
         http_client.start do |http|
           sspi_client.http_authenticate do |header|
             http_req['Authorization'] = header
-            http_resp = http.request(http_req)
+            http_resp = make_the_request(http,http_req)
             http_resp['www-authenticate']
           end
         end
@@ -92,9 +92,19 @@ module HTTPI
       def perform_http_request(http_client,http_req)
         http_resp = nil
         http_client.start do |http|
-          http_resp = http.request(http_req)
+          http_resp = make_the_request(http,http_req)
         end
         http_resp
+      end
+      
+      def make_the_request(http,http_req)
+        if @request.on_body
+          http.request(http_req) do |r|
+            r.read_body(@request.on_body)
+          end
+        else
+          http.request(http_req)
+        end
       end
       
       def convert_to_http_request(type,req)
