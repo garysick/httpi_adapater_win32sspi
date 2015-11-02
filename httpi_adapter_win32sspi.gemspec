@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.email      = 'garys361@gmail.com'
   spec.platform   = Gem::Platform::CURRENT
   spec.required_ruby_version = '>=1.9'
-  spec.homepage   = 'https://github.com/garysick/httpi-adapter-win32sspi'
-  spec.files      = Dir['**/*'].reject{ |f| f.include?('git') }
+  spec.homepage   = 'https://github.com/garysick/httpi_adapter_win32sspi'
+  spec.files      = Dir['**/*'].reject{ |f| f.include?('git') || f.include?('Notes.txt') }
   spec.test_files = Dir['test/*.rb']
   spec.has_rdoc   = false
 
