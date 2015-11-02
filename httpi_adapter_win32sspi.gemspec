@@ -3,7 +3,7 @@ require 'rubygems'
 Gem::Specification.new do |spec|
   spec.name       = 'httpi-adapter-win32sspi'
   spec.summary    = 'A HTTPI Adapter the uses Win32SSPI'
-  spec.version    = '0.0.1.pre'
+  spec.version    = '0.0.1.rc1'
   spec.author     = 'Gary Sick'
   spec.license    = 'MIT'
   spec.email      = 'garys361@gmail.com'
@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.test_files = Dir['test/*.rb']
   spec.has_rdoc   = false
 
-  spec.add_dependency('win32-sspi', '~>0.0.1.pre')
+  spec.add_dependency('win32-sspi', '=0.0.1.rc1')
   spec.add_development_dependency('test-unit','~>3.0')
   spec.requirements << "This gem will only work in a Windows Environment"
 
